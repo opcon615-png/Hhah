@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model VpnConfig {
+  id             String   @id @default(cuid())
+  name           String
+  protocol       String   // vmess, vless, trojan, shadowsocks, wireguard, hysteria2
+  server         String
+  port           Int
+  configData     String   // JSON string for protocol-specific settings
+  remark         String?
+  isActive       Boolean  @default(false)
+  order          Int      @default(0)
+  subscriptionId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  subscription SubscriptionLink? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model SplitTunnelRule {
+  id         String   @id @default(cuid())
+  type       String   // whitelist, blacklist
+  targetType String   // domain, app, ip
+  value      String
+  enabled    Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model PingTarget {
+  id       String   @id @default(cuid())
+  hostname String
+  port     Int      @default(443)
+  protocol String   @default("tcp") // icmp, tcp
+  label    String?
+  isDefault Boolean @default(false)
+  enabled  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model DnsConfig {
+  id          String   @id @default(cuid())
+  name        String
+  primaryDns  String
+  secondaryDns String?
+  dohUrl      String?  // DNS over HTTPS URL
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SubscriptionLink {
+  id               String    @id @default(cuid())
+  name             String
+  url              String
+  lastFetchedAt    DateTime?
+  lastError        String?
+  configCount      Int       @default(0)
+  autoUpdate       Boolean   @default(true)
+  updateInterval   Int       @default(3600) // seconds, default 1 hour
+  enabled          Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  configs VpnConfig[]
+}
+
+model VpnShare {
+  id           String   @id @default(cuid())
+  interfaceName String
+  ipRange      String
+  gateway      String?
+  enabled      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
